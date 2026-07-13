@@ -1,20 +1,19 @@
-services: #elenco container da far partire
+services:   # elenco container da far partire
 
   rabbitmq:
-    image: rabbitmq:3-management #immagine RabbitMQ con dashboard
+    image: rabbitmq:3-management   # immagine RabbitMQ con dashboard
     ports:
       - "1883:1883"     # porta MQTT
-      - "15672:15672"   # dashboard RabbitMQ 
+      - "15672:15672"   # dashboard RabbitMQ
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
 
-
   producer:
-    build: ./producer #costruisci container partendo da dockerfile presente in sta cartella
+    build: ./producer   # costruisci container partendo da dockerfile presente in sta cartella
     depends_on:
-      - rabbitmq #prima deve partire rabbitmq 
-    environment: 
+      - rabbitmq   # prima deve partire rabbitmq
+    environment:
       MQTT_HOST: rabbitmq
       MQTT_PORT: 1883
       MQTT_USERNAME: guest
