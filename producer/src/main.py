@@ -33,7 +33,22 @@ def main():
     # Crea e connette il client MQTT
     client_mqtt = mqtt.Client()
     client_mqtt.username_pw_set(config.MQTT_USERNAME, config.MQTT_PASSWORD)
-    client_mqtt.connect(config.MQTT_HOST, config.MQTT_PORT)
+
+    # Tenta la connessione a RabbitMQ, riprovando finche non e' pronto
+    connesso = False
+    tentativi = 0
+    while not connesso and tentativi < 20:
+        try:  # tenta di connettersi
+            client_mqtt.connect(config.MQTT_HOST, config.MQTT_PORT)
+            connesso = True
+        except ConnectionRefusedError:
+            tentativi += 1
+            print(f"RabbitMQ non ancora pronto, ritento tra 3 secondi... (tentativo {tentativi})")
+            time.sleep(3)  # attende 3 secondi 
+
+    if not connesso:
+        raise Exception("Impossibile connettersi a RabbitMQ dopo 20 tentativi")
+
     client_mqtt.loop_start()  # avvia thread che gestisce comunicazione in background
 
     # Crea le 20 macchine dentro lista formato Macchina(id, 200, 3000),

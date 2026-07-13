@@ -8,6 +8,8 @@ services:   # elenco container da far partire
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    volumes:   # prendi enabled_plugins e rendilo visibile al percorso /etc/rabbitmq/enabled_plugins nel container
+      - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
 
   producer:
     build: ./producer   # costruisci container partendo da dockerfile presente in sta cartella
