@@ -13,7 +13,7 @@ def connetti():
     )
     return connessione
 
-
+#crea schema in DB
 def crea_schema(connessione):
     comando_sql = """
         CREATE TABLE IF NOT EXISTS eventi (
@@ -29,4 +29,17 @@ def crea_schema(connessione):
     cursore = connessione.cursor()
     cursore.execute(comando_sql)
     connessione.commit() #fa partire i comandi eseguiti con execute
+    cursore.close()
+
+#inserisce evento quando GestoreStato.valuta_evento() restituisce True
+def inserisci_evento(connessione, id_macchina, valore, comportamento, timestamp_evento):
+
+    comando_sql = """
+        INSERT INTO eventi (id_macchina, valore, comportamento, timestamp_evento)
+        VALUES (%s, %s, %s, %s);
+    """
+ 
+    cursore = connessione.cursor()
+    cursore.execute(comando_sql, (id_macchina, valore, comportamento, timestamp_evento)) #passa i parametri dentro la query
+    connessione.commit()
     cursore.close()
