@@ -37,7 +37,7 @@ def avvia_macchina(macchina: Macchina, client_mqtt: mqtt.Client):
 
 def main():
     # Crea e connette il client MQTT
-    client_mqtt = mqtt.Client()
+    client_mqtt = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
     client_mqtt.username_pw_set(config.MQTT_USERNAME, config.MQTT_PASSWORD)
 
     # Tenta la connessione a RabbitMQ, riprovando finche non e' pronto
