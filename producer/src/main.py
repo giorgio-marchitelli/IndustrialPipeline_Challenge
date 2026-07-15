@@ -1,12 +1,19 @@
 import time
 import json
 import threading
+import logging
 
 import paho.mqtt.client as mqtt
 
 # variabili d'ambiente e classi macchina
 import config
 from macchina import Macchina
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+logger = logging.getLogger("producer")
 
 
 # una singola connessione a MQTT condivisa da tutte le macchine
@@ -22,8 +29,7 @@ def avvia_macchina(macchina: Macchina, client_mqtt: mqtt.Client):
         payload = json.dumps(evento)  # da dizionario creato da macchina.py a JSON
         client_mqtt.publish(topic, payload)
 
-        # TODO: sostituire con log
-        print(f"Pubblicato su {topic}: {payload}")  # pubblica su topic
+        logger.info(f"Pubblicato su {topic}: {payload}")  # pubblica su topic
 
         attesa = macchina.prossimo_intervallo_secondi()
         time.sleep(attesa)  # aspetta intervallo prima di ripetere
@@ -43,8 +49,8 @@ def main():
             connesso = True
         except ConnectionRefusedError:
             tentativi += 1
-            print(f"RabbitMQ non ancora pronto, ritento tra 3 secondi... (tentativo {tentativi})")
-            time.sleep(3)  # attende 3 secondi 
+            logger.warning(f"RabbitMQ non ancora pronto, ritento tra 3 secondi... (tentativo {tentativi})")
+            time.sleep(3)  # attende 3 secondi
 
     if not connesso:
         raise Exception("Impossibile connettersi a RabbitMQ dopo 20 tentativi")

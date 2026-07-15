@@ -1,7 +1,10 @@
 import time
+import logging
 import psycopg2  #per usare postgresql
 import psycopg2.extras
 import config
+
+logger = logging.getLogger("consumer")
 
 
 def connetti():
@@ -22,8 +25,7 @@ def connetti():
             connesso = True
         except psycopg2.OperationalError as errore:
             tentativi += 1
-            # TODO: sostituire con log
-            print(f"PostgreSQL non ancora pronto, ritento tra 3 secondi... (tentativo {tentativi})")
+            logger.warning(f"PostgreSQL non ancora pronto, ritento tra 3 secondi... (tentativo {tentativi})")
             time.sleep(3)
 
     if not connesso:
@@ -86,7 +88,7 @@ def leggi_eventi_per_macchina(connessione, id_macchina, limite=100):
         ORDER BY id DESC
         LIMIT %s;
     """
-    cursore = connessione.cursor(cursor_factory=psycopg2.extras.RealDictCursor) #fa prendere al cursore dizionari non tuple
+    cursore = connessione.cursor(cursor_factory=psycopg2.extras.RealDictCursor)  #fa prendere al cursore dizionari non tuple
     cursore.execute(comando_sql, (id_macchina, limite))
     righe = cursore.fetchall()
     cursore.close()
