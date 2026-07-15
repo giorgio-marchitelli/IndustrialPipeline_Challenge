@@ -93,3 +93,23 @@ def leggi_eventi_per_macchina(connessione, id_macchina, limite=100):
     righe = cursore.fetchall()
     cursore.close()
     return righe
+
+
+# ricostruisce lo stato del gestore all'avvio, leggendo l'ultimo valore salvato per ogni macchina
+def leggi_ultimo_valore_per_macchina(connessione):
+    comando_sql = """
+        SELECT DISTINCT ON (id_macchina) id_macchina, valore
+        FROM eventi
+        ORDER BY id_macchina, id DESC;
+    """
+    cursore = connessione.cursor()
+    cursore.execute(comando_sql)
+    righe = cursore.fetchall()
+    cursore.close()
+
+    # trasforma la lista di tuple (id_macchina, valore) in un dizionario {id_macchina: valore}
+    stato_iniziale = {}
+    for id_macchina, valore in righe:
+        stato_iniziale[id_macchina] = valore
+
+    return stato_iniziale

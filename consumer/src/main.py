@@ -19,8 +19,10 @@ logger = logging.getLogger("consumer")
 gestore = GestoreStato()  #dizionario di ogni macchina e valore
 connessione_db = database.connetti()
 database.crea_schema(connessione_db)
+stato_iniziale = database.leggi_ultimo_valore_per_macchina(connessione_db)
+gestore.imposta_stato_iniziale(stato_iniziale)
 api.imposta_connessione(connessione_db)  #passa la connessione all'API
-logger.info("Schema database pronto")
+logger.info(f"Schema database pronto, stato ricostruito per {len(stato_iniziale)} macchine")
 
 
 # alla connessione di paho-mqtt parte sta funzion
