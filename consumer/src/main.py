@@ -6,16 +6,19 @@ import paho.mqtt.client as mqtt
 
 import config
 import database
-from gestore_stato import GestoreStato 
+import api
+from gestore_stato import GestoreStato
 
-gestore = GestoreStato() #dizionario di ogni macchina e valore
+gestore = GestoreStato()  #dizionario di ogni macchina e valore
 connessione_db = database.connetti()
 database.crea_schema(connessione_db)
+api.imposta_connessione(connessione_db)  #passa la connessione all'API
 # TODO: sostituire con log
 print("Schema database pronto")
 
+
 # alla connessione di paho-mqtt parte sta funzion
-def on_connect(client, userdata, flags, reason_code, properties=None): #parametri utili alla connessione
+def on_connect(client, userdata, flags, reason_code, properties=None):  #parametri utili alla connessione
     if reason_code == 0:
         # TODO: sostituire con log
         print("Connesso a RabbitMQ (MQTT)")
@@ -26,17 +29,18 @@ def on_connect(client, userdata, flags, reason_code, properties=None): #parametr
         # TODO: sostituire con log
         print(f"Connessione fallita, codice: {reason_code}")
 
+
 # chiamata da paho-mqtt ogni volta che arriva un messaggio
 def on_message(client, userdata, msg):
-    try: 
-        evento = json.loads(msg.payload.decode()) #decodifica
+    try:
+        evento = json.loads(msg.payload.decode())  #decodifica
 
         id_macchina = evento["macchina_id"]
         valore = evento["valore"]
         comportamento = evento["comportamento"]
-        timestamp_evento = datetime.fromtimestamp(evento["timestamp"]) #formato epoch
+        timestamp_evento = datetime.fromtimestamp(evento["timestamp"])  #formato epoch
 
-        deve_salvare = gestore.valuta_evento(id_macchina, valore) #true o false
+        deve_salvare = gestore.valuta_evento(id_macchina, valore)  #true o false
 
         if deve_salvare:
             database.inserisci_evento(connessione_db, id_macchina, valore, comportamento, timestamp_evento)
@@ -47,12 +51,12 @@ def on_message(client, userdata, msg):
             print(f"Scartato evento macchina {id_macchina}, valore {valore}")
 
     except Exception as errore:
-        # TODO: sostituire con log 
+        # TODO: sostituire con log
         print(f"Errore nella gestione del messaggio: {errore}")
 
 
-client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2) # specifica versione delle firme di chiamate callback 
-client.username_pw_set(config.MQTT_UTENTE, config.MQTT_PASSWORD) #credenziali
+client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)  # specifica versione delle firme di chiamate callback
+client.username_pw_set(config.MQTT_UTENTE, config.MQTT_PASSWORD)  #credenziali
 client.on_connect = on_connect
 client.on_message = on_message
 
@@ -72,4 +76,8 @@ while not connesso and tentativi < 20:
 if not connesso:
     raise Exception("Impossibile connettersi a RabbitMQ dopo 20 tentativi")
 
-client.loop_forever() #sempre in ascolto
+# non piu loop.forever altrimenti non partiva mai blocco API
+client.loop_start()  # MQTT gira in thread separato cosi' puo' partire anche l'API
+# TODO: sostituire con log
+print("Avvio API REST sulla porta 8000")
+api.app.run(host="0.0.0.0", port=8000)  #avvia il server Flask porta 8000
